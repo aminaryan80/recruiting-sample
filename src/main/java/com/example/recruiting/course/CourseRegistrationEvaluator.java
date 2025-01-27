@@ -1,36 +1,73 @@
 package com.example.recruiting.course;
 
 import com.example.recruiting.course.dto.CourseRegistrationDto;
-import org.apache.commons.lang3.NotImplementedException;
 
-import java.util.List;
+import java.time.LocalDate;
+import java.util.*;
 
-/**
- * @author juergen.windhaber
- *
- * <p><p>
- * Evaluates which participants are currently valid.
- * As a course participant I can register to a course but I am also allowed to cancel whenever I want.
- * After a cancelation I can also register again, and so on and so forth.
- *
- * <p><p>
- * The current registration is the cronologicaly last registration a course participant sent.
- * <p>
- * A valid registrition is a registration which has the status:
- * <a href="#{@link}">{@link CourseRegistrationDto.RegistrationStatus#ENROLLED}</a>.
- *
- * <p><p>
- * The {@link CourseRegistrationEvaluator} holds a list of registrations. The list is of no particular order.
- *
- * <p><p>
- * The <a href="#{@link}">{@link com.example.recruiting.course.CourseRegistrationEvaluatorTest}</a> tests if the evaluator works correctly.
- *
- */
-public class CourseRegistrationEvaluator {
-
-
+class CourseRegistrationEvaluatorSlower {
     public static List<String> getAllCurrentValidCourseParticipantNames(List<CourseRegistrationDto> reservationEntries) {
+        HashMap<String, LocalDate> lastRegistrationDateForStudents = new HashMap<>();
+        HashMap<String, CourseRegistrationDto.RegistrationStatus> lastRegistrationStatusForStudents = new HashMap<>();
 
-        throw new NotImplementedException("The body of this method is not implemented yet!");
+        for (CourseRegistrationDto record : reservationEntries) {
+            String courseParticipantName = record.courseParticipantName();
+
+            if (lastRegistrationDateForStudents.containsKey(courseParticipantName)) {
+                LocalDate lastRecordDate = lastRegistrationDateForStudents.get(courseParticipantName);
+
+                if (record.registrationDate().isAfter(lastRecordDate)) {
+                    lastRegistrationDateForStudents.put(courseParticipantName, record.registrationDate());
+                    lastRegistrationStatusForStudents.put(courseParticipantName, record.registrationStatus());
+                }
+
+            } else {
+                lastRegistrationDateForStudents.put(courseParticipantName, record.registrationDate());
+                lastRegistrationStatusForStudents.put(courseParticipantName, record.registrationStatus());
+            }
+        }
+
+        List<String> result = new ArrayList<>();
+
+        for (String studentName : lastRegistrationStatusForStudents.keySet()) {
+            if (lastRegistrationStatusForStudents.get(studentName) == CourseRegistrationDto.RegistrationStatus.ENROLLED) {
+                result.add(studentName);
+            }
+        }
+
+        return result;
+    }
+}
+
+
+public class CourseRegistrationEvaluator {
+    public static List<String> getAllCurrentValidCourseParticipantNames(List<CourseRegistrationDto> reservationEntries) {
+        HashMap<String, LocalDate> lastRegistrationDateForStudents = new HashMap<>();
+        Set<String> result = new HashSet<>();
+
+        for (CourseRegistrationDto record : reservationEntries) {
+            String courseParticipantName = record.courseParticipantName();
+
+            if (lastRegistrationDateForStudents.containsKey(courseParticipantName)) {
+                LocalDate lastRecordDate = lastRegistrationDateForStudents.get(courseParticipantName);
+
+                if (record.registrationDate().isAfter(lastRecordDate)) {
+                    lastRegistrationDateForStudents.put(courseParticipantName, record.registrationDate());
+
+                    if (record.registrationStatus() == CourseRegistrationDto.RegistrationStatus.ENROLLED)
+                        result.add(courseParticipantName);
+                    else
+                        result.remove(courseParticipantName);
+                }
+
+            } else {
+                lastRegistrationDateForStudents.put(courseParticipantName, record.registrationDate());
+
+                if (record.registrationStatus() == CourseRegistrationDto.RegistrationStatus.ENROLLED)
+                    result.add(courseParticipantName);
+            }
+        }
+
+        return new ArrayList<>(result);
     }
 }

@@ -32,9 +32,7 @@ class CourseRegistrationEvaluatorTest {
 
     }
 
-    private static List<String>  toUpper(List<String> someList) {
+    private static List<String> toUpper(List<String> someList) {
         return someList.stream().map(StringUtils::upperCase).collect(Collectors.toList());
     }
-
-
 }
